@@ -1,119 +1,130 @@
-const res = require("express/lib/response");
-const db = require("../model");
-const Livro = db.livro;
+const db = require ("../model")
+const Livro = db.livros
 
-//Criar mensagem 
-exports.create = (req,res) =>{
-    //valida req
+//criar um livro
+exports.create = (req, res) => {
+    //valida requisição
     if(!req.body.titulo){
-        res.status(400).send({message: "COnteúdo não pode ser vazio"});
-        return;
+        res.status(400).send({message: "O conteúdo não pode ser vazio."})
+        return
     }
-    //Validou tem dados - create
+
+    //validou tem dados - create
     const livro = new Livro({
         titulo: req.body.titulo,
         descricao: req.body.descricao,
-        publicado: req.body.publicado ? req.body.publicado: false
-    });
+        publicado: req.body.publicado ? req.body.publicado : false
+        }
+    )
 
-    //Save
-    livro.save(livros).then(data=> {
-        res.send(data);
-
-    }).catch(err=> {
+    //save
+    Livro.save(livro).then(data => {
+        res.send(data)
+    }).catch(err => {
         res.status(500).send({
             message: err.message || "Erro ao criar livro."
-        });
-    });
-};
-
-//recuperar livro 
-
-exports.findAll = (req,res) => {
-    const titulo = req.body.titulo;
-    var condicao = titulo ? {titulo: {$regex: new RegExp(titulo), $options:"i"}}:{};
-
-    Livro.find(condicao).then(data =>{
-        res.send(data);
-    }).catch(err=>{
-        res.status(500).send({
-            message: err.message || "Erro ao recuperar livro"
+        })
     })
-});
-};
 
-//Recuperar por ID
-exports.findOne = (req,res) => {
-    const id = req.params.id;
-    
-    Livro.findById(id).then(data =>{
-        if (!data)
-        res.status(404).send({message: "Não encontrado" + id});
-        else res.send(data);
+}
+
+
+// Recuperar todos os livros
+exports.findAll = (req, res) => {
+    const titulo = req.query.titulo;
+    var condicao = titulo ? { titulo: { $regex: new RegExp(titulo, 'i') } } : {};
+    Livro.find(condicao).then(data => {
+        res.send(data);
     }).catch(err => {
-        res.status(500).send({message: "Id não encontrado" + id})
+        res.status(500).send({
+            message: err.message || "Erro ao recuperar os livros."
+        });
     });
 };
 
-//Alterar Livro 
-exports.update = (req,res) => {
-    if(!req.bdy){
+
+//recuperar por ID
+exports.findOne = (req, res) => {
+    const id = req.params.id
+    Livro.findById(id).then(data => {
+        if(!data)
+            res.status(404).send({message: "Não encontrado" + id})
+        else
+            res.send(data)
+    }).catch(err =>{
+        res.status(500).send({message: "ID não encontrado" + id})
+    })
+}
+
+
+//alterar
+exports.findOne = (req, res) => {
+    if(!req.body){
         return res.status(400).send({
-            message: "Campos não podem ser vazios!"
-        });
+            message: "Dados não poedm ser vazio!"
+        })
     }
 
-    const id = req.params.id; 
-
-    Livro.findByIdAndUpdate(id, req,body, {userfindAndModify:false}).then(data =>{
-        if(data){
+    const id = req.prams.id
+    Livro.findByIdAndUpdate(id, req.body, {userFindAndModify: false}).then(data =>{
+        if(!data){
             res.status(404).send({
-                message: 'Não foi possivel altear id=$(id) Livro não encontrado'
-            });
-        } else res.send({message: "Livro atualizado com sucesso "});
+                message: `Não foi possível alterar id=${id}. Livro não encontrado`
+            })
+        }else
+            res.send({message: "Livro atualizado com sucesso"})
     }).catch(err =>{
         res.status(500).send({
-            message: "Não foi possivel alterar livro" 
-        });
-    });
-};
+            message: `Não foi possível atualizar o id ${id}`
+        })
+    })
 
-//Alterar Livro 
+}
+
+
+//deletar
 exports.delete = (req,res) => {
-    if(!req.bdy){
-        return res.status(400).send({
-            message: "Campos não podem ser vazios!"
-        });
-    }
+    const id = req.params.id
 
-    const id = req.params.id; 
-
-    Livro.findByIdAndDelete(id, req,body, {userfindAndModify:false}).then(data =>{
-        if(data){
+    Livro.findByIdAndRemove(id, req.body, {userFindAndModify: false}).then(data =>{
+        if (!data){
             res.status(404).send({
-                message: 'Não foi possivel deletar id=$(id) Livro não encontrado'
-            });
-        } else res.send({message: "Livro deletado com sucesso "});
+                message: `Não foi possivel deletar o id=${id}. Livro não encontrado`
+            })
+        }else
+            res.send({message: "Livro deletado com sucesso"})
     }).catch(err =>{
         res.status(500).send({
-            message: "Não foi possivel deletar" + id
+            message: `Não foi possível deletar o id ${id}`
+        })
+    })
+}
+
+
+//deletar tudo
+exports.deleteAll = (req, res) => {
+    Livro.deleteMany({}).then(data => {
+        res.send({
+            message: `${data.deletedCount} livros foram deletados`
+        })
+    }).catch(err => {
+        res.status(500).send({
+            message: err.message || "Erro ao deletar livros."
+        })
+    })
+}
+
+// exports. findAllPublicados = (req,res) => {
+//     Livro.find({publicado: true})
+// }
+
+// Recuperar todos os livros publicados
+exports.findAllPublicados = (req, res) => {
+    Livro.find({ publicado: true }).then(data => {
+        res.send(data);
+    }).catch(err => {
+        res.status(500).send({
+            message: err.message || "Erro ao recuperar livros publicados."
         });
     });
 };
-
-//Deletar tudo 
-exports.deleteAll = (req,res) =>{
-    Livro.deleteMany({}).then(data =>{
-        res.send({message:'$(data.deletedCount) livros foram apagados'});
-        
-    }).catch(err =>{
-        res.status(500).send({
-            message: err.message || "Erro ao deletar todos os livros."
-        });
-    });
-
-};
-
-
-
-
