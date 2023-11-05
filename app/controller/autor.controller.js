@@ -114,3 +114,5 @@ exports.deleteAll = (req, res) => {
       });
     });
 };
+
+
